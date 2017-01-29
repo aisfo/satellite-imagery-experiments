@@ -35,29 +35,26 @@ config.gpu_options.allow_growth = True
 with tf.Session(config=config) as sess:
 
   sess.run(tf.global_variables_initializer())
-  summary_writer = tf.summary.FileWriter('/tmp/dstl', graph=sess.graph)
+  summary_writer = tf.summary.FileWriter('/tmp/msi-full', graph=sess.graph)
   
   print(time.time(), 'starting')
 
   while True:
     batch = train_loader.get_batch(1)
 
-    break
     filename = batch[0][0]
     input_image = batch[0][1]
     label_image = batch[0][2]
 
-    pos_weight = 1 #(900*900*10 - np.count_nonzero(labels))/np.count_nonzero(labels)
-
     _, error, summary, step, learning_rate = sess.run([m.train, m.error, m.summary, m.global_step, m.learning_rate], feed_dict={ 
       m.input_image: [input_image],  
-      m.label_image: [label_image], 
-      m.pos_weight: pos_weight 
+      m.label_image: [label_image]
     })
 
-    #summary_writer.add_summary(summary, step)
+    summary_writer.add_summary(summary, step)
 
-    print(time.time(), step, error, learning_rate, filename, pos_weight)
+    print(time.time(), step, error, learning_rate, filename)
+
 
 
 

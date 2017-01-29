@@ -42,7 +42,7 @@ class Loader():
 
   def worker(self):
     range_min = 0
-    range_max = len(self.filenames) - 1
+    range_max = len(self.filenames)
     t = threading.currentThread()
     idx = 0
 
@@ -51,7 +51,7 @@ class Loader():
 
       if not self.data_queue.full():
         if self.randomize:
-          idx = random.randint(range_min, range_max)
+          idx = random.randint(range_min, range_max - 1)
         else:
           idx += 1
           idx = idx % range_max
@@ -62,11 +62,10 @@ class Loader():
           label_image = tiff.imread('label_images/' + filename) 
           label_image = label_image[:, :, :1] / 255
 
+
           # angle = random.randint(0, 360)
           # input_image = scipy.ndimage.rotate(input_image, angle, reshape=False)
           # label_image = scipy.ndimage.rotate(label_image, angle, reshape=False)
-
-          print(label_image.shape)
 
           self.data_queue.put_nowait((filename, input_image, label_image))
         except Full:
