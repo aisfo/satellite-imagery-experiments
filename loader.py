@@ -9,11 +9,12 @@ import scipy.ndimage.interpolation
 
 class Loader():
 
-  def __init__(self, filenames, capacity, num_threads=1, randomize=True):
+  def __init__(self, filenames, capacity, num_threads=1, randomize=True, augment=True):
     self.filenames = filenames
     self.data_queue = Queue(capacity)
     self.randomize = randomize
     self.threads = []
+    self.augment = augment
     for i in range(num_threads):
       worker = threading.Thread(target=self.worker)
       worker.daemon = True
@@ -57,15 +58,16 @@ class Loader():
           idx = idx % range_max
         filename = self.filenames[idx]
         try:
-          input_image = tiff.imread('input_images/' + filename + 'f') 
-          input_image = input_image / 255
-          label_image = tiff.imread('label_images/' + filename) 
+          input_image = tiff.imread('input_images/' + filename) 
+          label_image = tiff.imread('label_images/' + filename[:-1]) 
           label_image = label_image[:, :, :1] / 255
 
+          if self.augment:
+            angle = random.randint(0, 360)
+            input_image = scipy.ndimage.rotate(input_image, angle, reshape=False)
+            label_image = scipy.ndimage.rotate(label_image, angle, reshape=False)
 
-          # angle = random.randint(0, 360)
-          # input_image = scipy.ndimage.rotate(input_image, angle, reshape=False)
-          # label_image = scipy.ndimage.rotate(label_image, angle, reshape=False)
+          input_image = (input_image - np.mean(input_image)) / np.std(input_image)
 
           self.data_queue.put_nowait((filename, input_image, label_image))
         except Full:
