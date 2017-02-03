@@ -12,7 +12,7 @@ import scipy.misc
 image_dir = 'input_images/'
 label_files = [filename for filename in listdir(image_dir)]
 label_files.sort()
-shuffle(label_files)
+#shuffle(label_files)
 
 test_label_files = label_files[:5]
 train_label_files = label_files[5:]
@@ -30,7 +30,7 @@ test_loader.stop()
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
-shouldLoad = False
+shouldLoad = True
 modelName = 'msi-base'
 
 saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
@@ -47,9 +47,9 @@ with tf.Session(config=config) as sess:
   
   print(time.time(), 'starting')
 
-  for epoch in range(1000):
-    batch = train_loader.get_batch(1)
+  for epoch in range(2000):
 
+    batch = train_loader.get_batch(1)
     filename = batch[0][0]
     input_image = batch[0][1]
     label_image = batch[0][2]
@@ -59,10 +59,12 @@ with tf.Session(config=config) as sess:
       m.label_image: [label_image]
     })
 
-    save_path = saver.save(sess, modelName)
-    summary_writer.add_summary(summary, step)
+    if step % 20 == 0:
+      save_path = saver.save(sess, modelName, step)
+      summary_writer.add_summary(summary, step)
 
-    if epoch % 100 == 0:
+    if step % 100 == 0:
+      ave_error = 0
       for item in test_batch:
         filename = item[0]
         input_image = item[1]
@@ -74,13 +76,13 @@ with tf.Session(config=config) as sess:
           m.is_train: False
         })
 
-        print(time.time(), step, error, test_error, learning_rate, filename)
+        ave_error += test_error
 
         result_image = result[0].reshape((1500, 1500))
-        scipy.misc.imsave("training/{0}-{1}-{2}.png".format(modelName, filename, step), result_image)
+        scipy.misc.imsave("training/{0}-{1}-{2}.png".format(filename, step, modelName), result_image)
 
 
-
+      print(time.time(), step, error, ave_error / 5.0, learning_rate)
 
 
 train_loader.stop()
