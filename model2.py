@@ -12,34 +12,39 @@ is_train = tf.placeholder_with_default(True, ())
 
 global_step = tf.Variable(0, trainable=False)
 
-learning_rate = tf.train.exponential_decay(0.0005, global_step, 50, 0.99, staircase=True)
+learning_rate = tf.train.exponential_decay(0.01, global_step, 50, 0.99, staircase=True)
 tf.summary.scalar('learning_rate', learning_rate)
 
-keep_prob = tf.cond(is_train, lambda: tf.identity(0.5), lambda: tf.identity(1.0))
+keep_prob = tf.cond(is_train, lambda: tf.identity(0.8), lambda: tf.identity(1.0))
 
 norm_coef = 0.0005
 
 
 layer, bias = conv(input_image, "conv0", width=16, stride=4, out_depth=64)
-layer = tf.nn.relu(layer + bias)
+
+layer = tf.nn.relu(batch_norm(layer + bias, 'bn0', is_train))
 
 layer = maxpool(layer, "conv0", width=2, stride=1)
 
 layer, bias  = conv(layer, "conv1", width=4, stride=1, out_depth=256)
-layer = tf.nn.relu(layer + bias)
+
+layer = tf.nn.relu(batch_norm(layer + bias, 'bn1', is_train))
 
 layer = tf.nn.dropout(layer, keep_prob, name="conv1/DropOut")
 
 layer, bias  = conv(layer, "conv2", width=3, stride=1, out_depth=128)
-layer = tf.nn.relu(layer + bias)
+
+layer = tf.nn.relu(batch_norm(layer + bias, 'bn2', is_train))
 
 layer = tf.nn.dropout(layer, keep_prob, name="conv2/DropOut")
 
 layer, bias  = conv(layer, "conv3", width=16, stride=2, out_depth=16, transpose=True)
-layer = tf.nn.relu(layer + bias)
+
+layer = tf.nn.relu(batch_norm(layer + bias, 'bn3', is_train))
 
 layer, bias  = conv(layer, "conv4", width=16, stride=2, out_depth=1, transpose=True)
-layer = layer + bias
+
+layer = batch_norm(layer + bias, 'bn4', is_train)
 
 
 

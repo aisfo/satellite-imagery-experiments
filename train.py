@@ -4,7 +4,7 @@ import time
 import re
 import tensorflow as tf
 import numpy as np
-import model as m
+import model2 as m
 from loader import Loader
 import scipy.misc
 
@@ -30,8 +30,8 @@ test_loader.stop()
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
-shouldLoad = True
-modelName = 'msi-base'
+shouldLoad = False
+modelName = 'msi-bn-1'
 
 saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
 
@@ -47,7 +47,7 @@ with tf.Session(config=config) as sess:
   
   print(time.time(), 'starting')
 
-  for epoch in range(2000):
+  for epoch in range(300):
 
     batch = train_loader.get_batch(1)
     filename = batch[0][0]
@@ -59,9 +59,10 @@ with tf.Session(config=config) as sess:
       m.label_image: [label_image]
     })
 
-    if step % 20 == 0:
-      save_path = saver.save(sess, modelName, step)
-      summary_writer.add_summary(summary, step)
+    #if step % 20 == 0:
+    #   save_path = saver.save(sess, modelName)
+    
+    summary_writer.add_summary(summary, step)
 
     if step % 100 == 0:
       ave_error = 0
