@@ -1,43 +1,56 @@
 from os import listdir
-from random import shuffle
+from random import shuffle, randint
 import time
-import re
-import tensorflow as tf
+
 import numpy as np
-import model2 as m
+import tensorflow as tf
+import tifffile as tiff
+from scipy import ndimage, misc
+
 from loader import Loader
-import scipy.misc
+import model_bn as m
 
 
-image_dir = 'input_images/'
-label_files = [filename for filename in listdir(image_dir)]
+label_files = [filename for filename in listdir('input_images')]
 label_files.sort()
 #shuffle(label_files)
 
-test_label_files = label_files[:5]
+
+def data_processor(filename, config):
+  input_image = tiff.imread('input_images/{0}'.format(filename))
+  label_image = tiff.imread('label_images/{0}'.format(filename[:-1]))
+  label_image = label_image[:, :, :1] / 255
+
+  if config.augment:
+    angle = randint(0, 360)
+    input_image = ndimage.rotate(input_image, angle, reshape=False)
+    label_image = ndimage.rotate(label_image, angle, reshape=False)
+
+  input_image = (input_image - np.mean(input_image)) / np.std(input_image)
+  return (filename, input_image, label_image)
+
+
 train_label_files = label_files[5:]
-
-test_loader = Loader(test_label_files, 5, 1, randomize = False, augment = False)
-train_loader = Loader(train_label_files, 5, 1)
-
-test_loader.start()
+train_loader = Loader(train_label_files, 5, 1, processor=data_processor)
 train_loader.start()
 
+
+test_label_files = label_files[:5]
+test_loader = Loader(test_label_files, 5, 1, processor=data_processor, randomize=False, augment=False)
+test_loader.start()
 test_batch = test_loader.get_batch(5)
 test_loader.stop()
 
 
+
+shouldLoad = False
+modelName = "{0}-0".format(m.modelName)
+
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
-shouldLoad = False
-modelName = 'msi-bn-1'
-
-saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
-
-
 with tf.Session(config=config) as sess:
-  
+  saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
   summary_writer = tf.summary.FileWriter('/home/aisfo/tmp/' + modelName, graph=sess.graph)
 
   if shouldLoad:
@@ -47,7 +60,7 @@ with tf.Session(config=config) as sess:
   
   print(time.time(), 'starting')
 
-  for epoch in range(300):
+  for epoch in range(1000):
 
     batch = train_loader.get_batch(1)
     filename = batch[0][0]
@@ -71,7 +84,7 @@ with tf.Session(config=config) as sess:
         input_image = item[1]
         label_image = item[2]
 
-        test_error, learning_rate, result = sess.run([m.error, m.learning_rate, m.test], feed_dict={ 
+        test_error, learning_rate, result = sess.run([m.error, m.learning_rate, m.result], feed_dict={ 
           m.input_image: [input_image],  
           m.label_image: [label_image],
           m.is_train: False
@@ -80,8 +93,7 @@ with tf.Session(config=config) as sess:
         ave_error += test_error
 
         result_image = result[0].reshape((1500, 1500))
-        scipy.misc.imsave("training/{0}-{1}-{2}.png".format(filename, step, modelName), result_image)
-
+        misc.imsave("training/{0}-{1}-{2}.png".format(filename, step, modelName), result_image)
 
       print(time.time(), step, error, ave_error / 5.0, learning_rate)
 
