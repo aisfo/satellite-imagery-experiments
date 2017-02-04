@@ -1,3 +1,4 @@
+
 from os import listdir
 from random import shuffle, randint
 import time
@@ -58,7 +59,7 @@ with tf.Session(config=config) as sess:
   else:
     sess.run(tf.global_variables_initializer())
   
-  print(time.time(), 'starting')
+  print("{0}: training start;".format(time.time())
 
   for epoch in range(1000):
 
@@ -95,7 +96,7 @@ with tf.Session(config=config) as sess:
         result_image = result[0].reshape((1500, 1500))
         misc.imsave("training/{0}-{1}-{2}.png".format(filename, step, modelName), result_image)
 
-      print(time.time(), step, error, ave_error / 5.0, learning_rate)
+      print("{0}: step {1}; train {2}; test {3}; lrate {4};".format(time.time(), step, error, ave_error / 5.0, learning_rate))
 
 
 train_loader.stop()
