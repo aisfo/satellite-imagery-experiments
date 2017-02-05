@@ -5,8 +5,8 @@ from helpers import *
 
 modelName = 'sat-bn'
 
-input_image = tf.placeholder(tf.float32, shape=(1, 1500, 1500, 3))
-label_image = tf.placeholder(tf.float32, shape=(1, 1500, 1500, 1))
+input_image = tf.placeholder(tf.float32, shape=(None, 1500, 1500, 3))
+label_image = tf.placeholder(tf.float32, shape=(None, 1500, 1500, 1))
 
 is_train = tf.placeholder_with_default(True, ())
 global_step = tf.Variable(0, trainable=False)
@@ -49,7 +49,7 @@ layer = batch_norm(layer + bias, 'bn4', is_train)
 result = tf.nn.sigmoid(layer)
 
 
-error = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(layer, label_image)) / (1500 * 1500 - 1) 
+error = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(layer, label_image))
 tf.summary.scalar('error', error)
 
 full_error = error + norm_coef * sum(tf.get_collection("l2_losses"))

@@ -31,17 +31,16 @@ def data_processor(filename, config):
   return (filename, input_image, label_image)
 
 
-train_label_files = label_files[5:]
-train_loader = Loader(train_label_files, 5, 1, processor=data_processor)
-train_loader.start()
-
-
 test_label_files = label_files[:5]
-test_loader = Loader(test_label_files, 5, 1, processor=data_processor, randomize=False, augment=False)
+test_loader = Loader(test_label_files, 5, processor=data_processor)
 test_loader.start()
 test_batch = test_loader.get_batch(5)
 test_loader.stop()
 
+
+train_label_files = label_files[:5]
+train_loader = Loader(train_label_files, 5, processor=data_processor, randomize=True, augment=True)
+train_loader.start()
 
 
 shouldLoad = False
@@ -52,25 +51,24 @@ config.gpu_options.allow_growth = True
 
 with tf.Session(config=config) as sess:
   saver = tf.train.Saver(write_version=tf.train.SaverDef.V2)
-  summary_writer = tf.summary.FileWriter('/home/aisfo/tmp/' + modelName, graph=sess.graph)
+  summary_writer = tf.summary.FileWriter('summary/{0}'.format(modelName), graph=sess.graph)
 
   if shouldLoad:
     saver.restore(sess, modelName)
   else:
     sess.run(tf.global_variables_initializer())
   
-  print("{0}: training start;".format(time.time())
+  print("{0}: training start;".format(time.time()))
 
-  for epoch in range(1000):
-
+  while True:
     batch = train_loader.get_batch(1)
-    filename = batch[0][0]
-    input_image = batch[0][1]
-    label_image = batch[0][2]
+    filenames = batch[0]
+    input_images = batch[1]
+    label_images = batch[2]
 
-    _, error, summary, step, learning_rate = sess.run([m.train, m.error, m.summary, m.global_step, m.learning_rate], feed_dict={ 
-      m.input_image: [input_image],  
-      m.label_image: [label_image]
+    _, error, summary, step = sess.run([m.train, m.error, m.summary, m.global_step], feed_dict={ 
+      m.input_image: input_images,  
+      m.label_image: label_images
     })
 
     #if step % 20 == 0:
@@ -79,24 +77,22 @@ with tf.Session(config=config) as sess:
     summary_writer.add_summary(summary, step)
 
     if step % 100 == 0:
-      ave_error = 0
-      for item in test_batch:
-        filename = item[0]
-        input_image = item[1]
-        label_image = item[2]
+      filenames = test_batch[0]
+      input_images = test_batch[1]
+      label_images = test_batch[2]
 
-        test_error, learning_rate, result = sess.run([m.error, m.learning_rate, m.result], feed_dict={ 
-          m.input_image: [input_image],  
-          m.label_image: [label_image],
-          m.is_train: False
-        })
+      test_error, learning_rate, result = sess.run([m.error, m.learning_rate, m.result], feed_dict={ 
+        m.input_image: input_images,  
+        m.label_image: label_images,
+        m.is_train: False
+      })
 
-        ave_error += test_error
+      print("{0}: step {1}; train {2}; test {3}; lrate {4};".format(time.time(), step, error, test_error, learning_rate))
 
-        result_image = result[0].reshape((1500, 1500))
-        misc.imsave("training/{0}-{1}-{2}.png".format(filename, step, modelName), result_image)
+      for idx, filename in enumerate(filenames):
+        result_image = result[idx].reshape((1500, 1500))
+        misc.imsave("test_results/{0}-{1}-{2}.png".format(filename, step, modelName), result_image)
 
-      print("{0}: step {1}; train {2}; test {3}; lrate {4};".format(time.time(), step, error, ave_error / 5.0, learning_rate))
-
+    if step == 1000: break
 
 train_loader.stop()

@@ -5,8 +5,8 @@ from helpers import *
 
 modelName = 'sat-base'
 
-input_image = tf.placeholder(tf.float32, shape=(1, 1500, 1500, 3))
-label_image = tf.placeholder(tf.float32, shape=(1, 1500, 1500, 1))
+input_image = tf.placeholder(tf.float32, shape=(None, 1500, 1500, 3))
+label_image = tf.placeholder(tf.float32, shape=(None, 1500, 1500, 1))
 
 is_train = tf.placeholder_with_default(True, ())
 global_step = tf.Variable(0, trainable=False)

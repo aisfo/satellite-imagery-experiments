@@ -6,10 +6,11 @@ from queue import Queue, Full
 import random
 import threading
 import time
+import numpy as np
 
 class Loader():
 
-  def __init__(self, filenames, capacity, processor, num_threads=1, randomize=True, augment=True):
+  def __init__(self, filenames, capacity, processor, num_threads=1, randomize=False, augment=False):
     self.filenames = filenames
     self.data_queue = Queue(capacity)
     self.randomize = randomize
@@ -39,7 +40,7 @@ class Loader():
     for i in range(size):
       elt = self.data_queue.get()
       batch.append(elt)
-    return batch
+    return list(map(list, zip(*batch)))
 
 
   def worker(self):

@@ -8,20 +8,21 @@ import numpy as np
 def conv(_input, name, width, stride, out_depth, transpose=False):
     with tf.variable_scope(name):
         input_shape = _input.get_shape().as_list()
-        in_depth =input_shape[-1]
+        in_depth = input_shape[-1]
         if transpose:
             conv_shape = [width, width, out_depth, in_depth]
         else:
             conv_shape = [width, width, in_depth, out_depth]
 
-        conv_w = tf.get_variable("conv_w",conv_shape, initializer=tf.contrib.layers.xavier_initializer_conv2d())
+        conv_w = tf.get_variable("conv_w", conv_shape, initializer=tf.contrib.layers.xavier_initializer_conv2d())
         conv_b = tf.get_variable("conv_b", out_depth, initializer=tf.random_normal_initializer(0))
          
         tf.add_to_collection("l2_losses", tf.nn.l2_loss(conv_w))
 
         if transpose:
-            output_shape = [input_shape[0], input_shape[1] * stride, input_shape[2] * stride, out_depth]
+            output_shape = [tf.shape(_input)[0], input_shape[1] * stride, input_shape[2] * stride, out_depth]
             _input = tf.nn.conv2d_transpose(_input, conv_w, output_shape, [1, stride, stride, 1], padding='SAME')
+            _input = tf.reshape(_input, (-1, input_shape[1] * stride, input_shape[2] * stride, out_depth))
         else:
             _input = tf.nn.conv2d(_input, conv_w, [1, stride, stride, 1], padding='SAME')
 
