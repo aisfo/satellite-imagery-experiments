@@ -45,7 +45,7 @@ layer = layer + bias
 result = tf.nn.sigmoid(layer)
 
 
-error = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(layer, label_image)) / (1500 * 1500 - 1) 
+error = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(layer, label_image))
 tf.summary.scalar('error', error)
 
 full_error = error + norm_coef * sum(tf.get_collection("l2_losses"))

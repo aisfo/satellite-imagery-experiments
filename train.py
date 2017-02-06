@@ -38,7 +38,7 @@ test_batch = test_loader.get_batch(5)
 test_loader.stop()
 
 
-train_label_files = label_files[:5]
+train_label_files = label_files[5:]
 train_loader = Loader(train_label_files, 5, processor=data_processor, randomize=True, augment=True)
 train_loader.start()
 
@@ -73,7 +73,6 @@ with tf.Session(config=config) as sess:
 
     #if step % 20 == 0:
     #   save_path = saver.save(sess, modelName)
-    
     summary_writer.add_summary(summary, step)
 
     if step % 100 == 0:
@@ -92,6 +91,7 @@ with tf.Session(config=config) as sess:
       for idx, filename in enumerate(filenames):
         result_image = result[idx].reshape((1500, 1500))
         misc.imsave("test_results/{0}-{1}-{2}.png".format(filename, step, modelName), result_image)
+
 
     if step == 1000: break
 
