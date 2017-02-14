@@ -14,9 +14,9 @@ global_step = tf.Variable(0, trainable=False)
 
 norm_coef = 0.0005
 
-keep_prob = tf.cond(is_train, lambda: tf.identity(0.8), lambda: tf.identity(1.0))
+keep_prob = tf.cond(is_train, lambda: tf.identity(0.75), lambda: tf.identity(1.0))
 
-learning_rate = tf.train.exponential_decay(0.01, global_step, 50, 0.99, staircase=True)
+learning_rate = tf.train.exponential_decay(0.01, global_step, 100, 0.95, staircase=True)
 tf.summary.scalar('learning_rate', learning_rate)
 
 

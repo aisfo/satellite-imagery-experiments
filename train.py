@@ -9,7 +9,7 @@ import tifffile as tiff
 from scipy import ndimage, misc
 
 from loader import Loader
-import model_bn as m
+import model_residual as m
 
 
 label_files = [filename for filename in listdir('input_images')]
@@ -44,7 +44,7 @@ train_loader.start()
 
 
 shouldLoad = False
-modelName = "{0}-0".format(m.modelName)
+modelName = "{0}-001-93-dropout".format(m.modelName)
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
@@ -88,11 +88,11 @@ with tf.Session(config=config) as sess:
 
       print("{0}: step {1}; train {2}; test {3}; lrate {4};".format(time.time(), step, error, test_error, learning_rate))
 
-      for idx, filename in enumerate(filenames):
-        result_image = result[idx].reshape((1500, 1500))
-        misc.imsave("test_results/{0}-{1}-{2}.png".format(filename, step, modelName), result_image)
+      filename = filenames[0]
+      result_image = result[0].reshape((1500, 1500))
+      misc.imsave("test_results/{0}-{1}-{2}.png".format(modelName, filename, step), result_image)
 
 
-    if step == 1000: break
+    if step == 5000: break
 
 train_loader.stop()
